@@ -2,13 +2,26 @@
 # author:yuki
 # -*- coding:utf-8 -*-
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
 from enum import Enum
 from typing import Optional, List
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from DBcontroller.DataBaseManager import SessionLocal
+from DBcontroller import crud, schemas
 
 app01 = APIRouter()
+
+
+"""创建数据库session连接"""
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 """Request请求模型"""
@@ -53,3 +66,9 @@ async def http_exception(strval: Optional[str] = None):
     if strval != "EXE":
         raise HTTPException(status_code=404, detail="wrong", headers={"X-Error": "Error"})
     return {strval}
+
+"""数据库连接"""
+@app01.get("/exception/getuserinfo")
+async def get_info(db: Session = Depends(get_db)):
+    userinfo = crud.get_userinfo(db)
+    return userinfo
